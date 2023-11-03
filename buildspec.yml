@@ -13,4 +13,5 @@ phases:
 artifacts:
   files:
     - target/*.jar
+    - scripts/*.sh
   discard-paths: yes
