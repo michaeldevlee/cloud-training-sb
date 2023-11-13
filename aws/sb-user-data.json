@@ -1,0 +1,10 @@
+{
+    "ImageId": "ami-05c13eab67c5d8861",
+    "InstanceType": "t2.micro",
+    "KeyName": "sb-training-api-key",
+    "SecurityGroupIds": ["sg-023d6a56efa7d48c9", "sg-0d796d5f1d2d6a6e2"],
+    "IamInstanceProfile": {
+        "Arn": "arn:aws:iam::318746479556:instance-profile/EC2-Role",
+        "Name": "EC2-Role"
+    }  
+}
