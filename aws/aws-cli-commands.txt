@@ -1,0 +1,5 @@
+aws ec2 create-launch-template --launch-template-name=test_template --launch-template-data file://aws/sb-user-data.json 
+aws ec2 run-instances --launch-template '{"LaunchTemplateName":"test_template"}'
+aws elbv2 create-target-group --name test_target_group --type INSTANCE
+aws elbv2 create-load-balancer
+aws autoscaling create-auto-scaling-group
