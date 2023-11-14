@@ -1,5 +1,33 @@
-aws ec2 create-launch-template --launch-template-name=test_template --launch-template-data file://aws/sb-user-data.json 
+#####################
+## ROLES           ##
+#####################
+aws iam create-role --role-name Test-EC2-Role --description "Role providing EC2 various permissions to run other services" --assume-role-policy-document file://aws/EC2_Role.json   
+aws iam attach-role-policy --role-name Test-Ec2-Role --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess
+aws iam attach-role-policy --role-name Test-Ec2-Role --policy-arn arn:aws:iam::aws:policy/AmazonEC2FullAccess
+aws iam create-instance-profile --instance-profile-name EC2-FullAccess-Instance-Profile
+aws iam add-role-to-instance-profile --instance-profile-name EC2-FullAccess-Instance-Profile --role-name Test-EC2-Role
+
+#####################
+## SECURITY GROUPS ##
+#####################
+aws ec2 create-security-group --description "allows all traffic to hit endpoint on elb"  --group-name public-access-to-elb
+aws ec2 create-security-group --description "allows all traffic from elb opened up on port 8090"  --group-name public-access-from-elb
+aws ec2 create-security-group --description "allows SSH access"  --group-name ssh-access
+aws ec2 authorize-security-group-ingress --group-name public-access-to-elb --protocol tcp --port 80 --cidr 0.0.0.0/0
+aws ec2 authorize-security-group-ingress --group-name public-access-from-elb --protocol tcp --port 8090 --source-group public-access-to-elb
+aws ec2 authorize-security-group-ingress --group-name ssh-access --protocol tcp --port 22 --cidr 0.0.0.0/0
+
+#####################
+## LAUNCH TEMPLATE ##
+#####################
+aws ec2 create-launch-template --launch-template-name=test_template --launch-template-data file://aws/launch-data.json 
+
+#####################
+## EC2 INSTANCES   ##
+#####################
 aws ec2 run-instances --launch-template '{"LaunchTemplateName":"test_template"}'
-aws elbv2 create-target-group --name test_target_group --type INSTANCE
-aws elbv2 create-load-balancer
-aws autoscaling create-auto-scaling-group
+aws elbv2 create-target-group --name test-target-group --target-type instance --protocol HTTP --port 80 --vpc-id vpc-010c4d1dea0aabe1f 
+aws elbv2 create-load-balancer --name test-elb  --subnets subnet-084c616a5076ba37d subnet-093bd57b9e481f1f8
+aws elbv2 creater-listener --load-balancer-arn arn:aws:elasticloadbalancing:us-east-1:318746479556:loadbalancer/app/test-elb/5ed42f991bd76686 --protocol HTTP --port 80 --default-actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:us-east-1:318746479556:targetgroup/test-target-group/29ff2a40c04f0b25
+aws autoscaling create-auto-scaling-group --auto-scaling-group-name test-auto-scaling-group --launch-template LaunchTemplateId=lt-09d511f7ea833b01a --min-size 1 --max-size 1 --availability-zones us-east-1d
+aws elbv2 register-targets --targets Id=i-037ce50ebf69eb7a5 --target-group-arn arn:aws:elasticloadbalancing:us-east-1:318746479556:targetgroup/test-target-group/29ff2a40c04f0b25
